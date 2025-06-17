@@ -15,11 +15,11 @@ df["studio_list"] = df["studios"].apply(lambda x: x.split(", ") if isinstance(x,
 # Streamlit UI
 st.title("📊 Anime Trends Dashboard (2020–2025)")
 
-tabs = st.tabs(["📚 Genre Insights", "🏭 Studio Insights", "🎞️ Anime Lookup"])
+tabs = st.tabs(["Genre Insights", "Studio Insights", "Anime Lookup"])
 
 # --- Genre Insights ---
 with tabs[0]:
-    st.header("📚 Genre Insights")
+    st.header("Genre Insights")
     
     genre_stats = []
     for _, row in df.iterrows():
@@ -31,7 +31,7 @@ with tabs[0]:
     avg_score = genre_df.groupby("genre")["score"].mean().sort_values(ascending=False).head(10)
     total_members = genre_df.groupby("genre")["members"].sum().sort_values(ascending=False).head(10)
 
-    st.subheader("🎯 Top 10 Genres by Average Score")
+    st.subheader("Top 10 Genres by Average Score")
     fig, ax = plt.subplots(figsize=(8, 5))
     sns.barplot(x=avg_score.values, y=avg_score.index, ax=ax, palette="crest")
     ax.set_xlabel("Average Score")
@@ -45,13 +45,13 @@ with tabs[0]:
 
 # --- Studio Insights ---
 with tabs[1]:
-    st.header("🏭 Studio Insights")
+    st.header("Studio Insights")
 
     # Most productive studios
     all_studios = df.explode("studio_list")
     studio_counts = all_studios["studio_list"].value_counts().head(10)
 
-    st.subheader("🎬 Top 10 Studios by Number of Anime Produced")
+    st.subheader("Top 10 Studios by Number of Anime Produced")
     fig, ax = plt.subplots(figsize=(8, 5))
     sns.barplot(x=studio_counts.values, y=studio_counts.index, ax=ax)
     ax.set_xlabel("Number of Anime")
@@ -60,7 +60,7 @@ with tabs[1]:
     # Highest rated studios
     studio_scores = all_studios.groupby("studio_list")["score"].mean().sort_values(ascending=False).head(10)
 
-    st.subheader("🌟 Top 10 Studios by Average Score")
+    st.subheader("Top 10 Studios by Average Score")
     fig, ax = plt.subplots(figsize=(8, 5))
     sns.barplot(x=studio_scores.values, y=studio_scores.index, ax=ax)
     ax.set_xlabel("Average Score")
@@ -68,9 +68,9 @@ with tabs[1]:
 
 # --- Anime Search ---
 with tabs[2]:
-    st.header("🎞️ Search Anime Details")
+    st.header("Search Anime Details")
 
-    anime_name = st.text_input("🔍 Enter an anime title:")
+    anime_name = st.text_input("Enter an anime title:")
     if anime_name:
         result = df[df["title"].str.contains(anime_name, case=False, na=False)]
         if not result.empty:
