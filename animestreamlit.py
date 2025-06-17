@@ -3,7 +3,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-# Load preprocessed dataset
 @st.cache_data
 def load_data():
     return pd.read_csv("anime_2020_2025_clustered.csv")
@@ -12,12 +11,10 @@ df = load_data()
 df["genres_list"] = df["genres"].apply(lambda x: x.split(", ") if isinstance(x, str) else [])
 df["studio_list"] = df["studios"].apply(lambda x: x.split(", ") if isinstance(x, str) else [])
 
-# Streamlit UI
-st.title("📊 Anime Trends Dashboard (2020–2025)")
+st.title("Anime Trends Dashboard (2020–2025)")
 
 tabs = st.tabs(["Genre Insights", "Studio Insights", "Anime Lookup"])
 
-# --- Genre Insights ---
 with tabs[0]:
     st.header("Genre Insights")
     
@@ -43,7 +40,6 @@ with tabs[0]:
     ax.set_xlabel("Total Members")
     st.pyplot(fig)
 
-# --- Studio Insights ---
 with tabs[1]:
     st.header("Studio Insights")
 
@@ -66,7 +62,6 @@ with tabs[1]:
     ax.set_xlabel("Average Score")
     st.pyplot(fig)
 
-# --- Anime Search ---
 with tabs[2]:
     st.header("Search Anime Details")
 
