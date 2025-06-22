@@ -101,3 +101,33 @@ try:
     st.pyplot(figc)
 except Exception as e:
     st.warning(f"Could not load or plot clustering results: {e}")
+
+st.sidebar.title("Anime Search")
+search_option = st.sidebar.selectbox(
+    "Search by:",
+    ["Anime Title", "Studio", "Genre"]
+)
+
+if search_option == "Anime Title":
+    anime_titles = sorted(data["title"].dropna().unique()) if "title" in data.columns else []
+    selected_title = st.sidebar.selectbox("Select Anime Title", anime_titles)
+    if selected_title:
+        st.subheader(f"Stats for: {selected_title}")
+        anime_stats = data[data["title"] == selected_title]
+        st.dataframe(anime_stats)
+
+if search_option == "Studio":
+    studios = sorted(set(s for sublist in data["studios"].fillna("").apply(lambda x: x.split(", ") if x else []) for s in sublist if s)) if "studios" in data.columns else []
+    selected_studio = st.sidebar.selectbox("Select Studio", studios)
+    if selected_studio:
+        st.subheader(f"Anime produced by: {selected_studio}")
+        studio_anime = data[data["studios"].fillna("").apply(lambda x: selected_studio in x)]
+        st.dataframe(studio_anime[[c for c in ["title", "score", "members", "year", "genres"] if c in studio_anime.columns]])
+
+if search_option == "Genre":
+    all_genres = sorted(set(g for sublist in data["genres_list"] for g in sublist if g))
+    selected_genre = st.sidebar.selectbox("Select Genre", all_genres)
+    if selected_genre:
+        st.subheader(f"Anime in Genre: {selected_genre}")
+        genre_anime = data[data["genres_list"].apply(lambda gl: selected_genre in gl)]
+        st.dataframe(genre_anime[[c for c in ["title", "score", "members", "year", "studios"] if c in genre_anime.columns]])
