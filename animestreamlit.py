@@ -104,10 +104,10 @@ if studio_search:
     search_mask &= filtered["studios"].str.contains(studio_search, case=False, na=False)
 
 results = filtered
-if genre_search:
-    results = results[results["genres"].str.contains(genre_search, case=False, na=False)]
-if studio_search:
-    results = results[results["studios"].str.contains(studio_search, case=False, na=False)]
+    if genre_search:
+        results = results[results["genres"].str.contains(genre_search, case=False, na=False)]
+    if studio_search:
+        results = results[results["studios"].str.contains(studio_search, case=False, na=False)]
 results = filtered[search_mask]
     else:
         st.warning("No anime found matching your genre/studio search.")
