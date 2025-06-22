@@ -6,7 +6,7 @@ import seaborn as sns
 st.set_page_config(page_title="Anime Trends Dashboard", layout="wide")
 st.title("Anime Trends (2020–2025)")
 
-data = pd.read_csv("anime_2020_2025_clustered.csv")
+data = pd.read_csv("anime_2020_2025.csv")
 
 data = data.dropna(subset=["score", "members", "episodes", "aired_from"])
 data = data[(data["score"] > 0) & (data["members"] > 0) & (data["episodes"] > 0)]
@@ -72,3 +72,39 @@ st.pyplot(fig4)
 st.subheader("Top 20 Highest Rated Anime")
 top_anime = filtered.sort_values(by="score", ascending=False).dropna(subset=["title", "score"]).head(20)
 st.dataframe(top_anime[["title", "score", "members", "year"]].reset_index(drop=True))
+
+st.subheader("Search for an Anime and View Stats")
+anime_query = st.text_input("Enter anime title (partial or full):")
+if anime_query:
+    search_results = filtered[filtered['title'].str.contains(anime_query, case=False, na=False)]
+    if not search_results.empty:
+        st.write(f"Found {len(search_results)} result(s):")
+        st.dataframe(search_results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
+        selected = search_results.iloc[0]
+        st.markdown(f"**Title:** {selected['title']}")
+        st.markdown(f"**Score:** {selected['score']}")
+        st.markdown(f"**Members:** {selected['members']}")
+        st.markdown(f"**Episodes:** {selected['episodes']}")
+        st.markdown(f"**Year:** {selected['year']}")
+        st.markdown(f"**Genres:** {selected['genres']}")
+        st.markdown(f"**Studios:** {selected['studios']}")
+    else:
+        st.warning("No anime found matching your search.")
+
+st.subheader("Search Anime by Genre and Studio")
+genre_search = st.text_input("Enter genre (partial or full):")
+studio_search = st.text_input("Enter studio (partial or full):")
+
+search_mask = pd.Series([True] * len(filtered))
+if genre_search:
+    search_mask &= filtered["genres"].str.contains(genre_search, case=False, na=False)
+if studio_search:
+    search_mask &= filtered["studios"].str.contains(studio_search, case=False, na=False)
+
+results = filtered[search_mask]
+if genre_search or studio_search:
+    if not results.empty:
+        st.write(f"Found {len(results)} result(s):")
+        st.dataframe(results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
+    else:
+        st.warning("No anime found matching your genre/studio search.")
