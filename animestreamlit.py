@@ -97,6 +97,7 @@ st.subheader("Search Anime by Genre")
 genre_search = st.text_input("Enter genre (partial or full) to list anime:")
 if genre_search:
     genre_results = filtered[filtered["genres"].str.contains(genre_search, case=False, na=False)]
+    genrestudio_results = studio_results.sort_values(by="score", ascending=False)_results = genre_results.sort_values(by="score", ascending=False)
     if not genre_results.empty:
         st.write(f"Found {len(genre_results)} anime in genre '{genre_search}':")
         st.dataframe(genre_results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
@@ -107,6 +108,7 @@ st.subheader("Search Anime by Studio")
 studio_search = st.text_input("Enter studio (partial or full) to list works:")
 if studio_search:
     studio_results = filtered[filtered["studios"].str.contains(studio_search, case=False, na=False)]
+    studio_results = studio_results.sort_values(by="score", ascending=False)
     if not studio_results.empty:
         st.write(f"Found {len(studio_results)} anime produced by studio '{studio_search}':")
         st.dataframe(studio_results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
