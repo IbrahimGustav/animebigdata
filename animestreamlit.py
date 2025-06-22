@@ -2,11 +2,13 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from pathlib import Path
 
 st.set_page_config(page_title="Anime Trends Dashboard", layout="wide")
 st.title("Anime Trends (2020–2025)")
 
-data = pd.read_csv("anime_2020_2025_clustered.csv")
+data_path = Path(__file__).parent / "anime_2020_2025_clustered.csv"
+data = pd.read_csv(data_path)
 
 data = data.dropna(subset=["score", "members", "episodes", "aired_from"])
 data = data[(data["score"] > 0) & (data["members"] > 0) & (data["episodes"] > 0)]
