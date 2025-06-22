@@ -93,20 +93,22 @@ if anime_query:
     else:
         st.warning("No anime found matching your search.")
 
-st.subheader("Search Anime by Genre and Studio")
-genre_search = st.text_input("Enter genre (partial or full):")
-studio_search = st.text_input("Enter studio (partial or full):")
-
-search_mask = pd.Series([True] * len(filtered))
+st.subheader("Search Anime by Genre")
+genre_search = st.text_input("Enter genre (partial or full) to list anime:")
 if genre_search:
-    search_mask &= filtered["genres"].str.contains(genre_search, case=False, na=False)
-if studio_search:
-    search_mask &= filtered["studios"].str.contains(studio_search, case=False, na=False)
+    genre_results = filtered[filtered["genres"].str.contains(genre_search, case=False, na=False)]
+    if not genre_results.empty:
+        st.write(f"Found {len(genre_results)} anime in genre '{genre_search}':")
+        st.dataframe(genre_results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
+    else:
+        st.warning(f"No anime found for genre '{genre_search}'.")
 
-results = filtered
-if genre_search:
-    results = results[results["genres"].str.contains(genre_search, case=False, na=False)]
+st.subheader("Search Anime by Studio")
+studio_search = st.text_input("Enter studio (partial or full) to list works:")
 if studio_search:
-    results = results[results["studios"].str.contains(studio_search, case=False, na=False)]
-else:
-    st.warning("No anime found matching your genre/studio search.")
+    studio_results = filtered[filtered["studios"].str.contains(studio_search, case=False, na=False)]
+    if not studio_results.empty:
+        st.write(f"Found {len(studio_results)} anime produced by studio '{studio_search}':")
+        st.dataframe(studio_results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
+    else:
+        st.warning(f"No anime found for studio '{studio_search}'.")
