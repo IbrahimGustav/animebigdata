@@ -6,7 +6,7 @@ import seaborn as sns
 st.set_page_config(page_title="Anime Trends Dashboard", layout="wide")
 st.title("Anime Trends (2020–2025)")
 
-data = pd.read_csv("anime_2020_2025.csv")
+data = pd.read_csv("anime_2020_2025_clustered.csv")
 
 data = data.dropna(subset=["score", "members", "episodes", "aired_from"])
 data = data[(data["score"] > 0) & (data["members"] > 0) & (data["episodes"] > 0)]
