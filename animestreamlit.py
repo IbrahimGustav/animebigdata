@@ -8,7 +8,11 @@ st.title("Anime Trends (2020–2025)")
 
 data = pd.read_csv("anime_2020_2025.csv")
 
-data = data.dropna(subset=["score", "members", "episodes", "aired_from"])
+required_cols = ["score", "members", "episodes", "aired_from"]
+existing_cols = [col for col in required_cols if col in data.columns]
+if existing_cols:
+    data = data.dropna(subset=existing_cols)
+
 data = data[(data["score"] > 0) & (data["members"] > 0) & (data["episodes"] > 0)]
 data["score"] = data["score"].astype(float)
 data["members"] = data["members"].astype(int)
