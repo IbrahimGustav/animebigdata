@@ -2,13 +2,11 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from pathlib import Path
 
 st.set_page_config(page_title="Anime Trends Dashboard", layout="wide")
 st.title("Anime Trends (2020–2025)")
 
-data_path = Path(__file__).parent / "anime_2020_2025_clustered.csv"
-data = pd.read_csv(data_path)
+data = pd.read_csv("anime_2020_2025.csv")
 
 data = data.dropna(subset=["score", "members", "episodes", "aired_from"])
 data = data[(data["score"] > 0) & (data["members"] > 0) & (data["episodes"] > 0)]
@@ -75,42 +73,27 @@ st.subheader("Top 20 Highest Rated Anime")
 top_anime = filtered.sort_values(by="score", ascending=False).dropna(subset=["title", "score"]).head(20)
 st.dataframe(top_anime[["title", "score", "members", "year"]].reset_index(drop=True))
 
-st.subheader("Search for an Anime and View Stats")
-anime_query = st.text_input("Enter anime title (partial or full):")
-if anime_query:
-    search_results = filtered[filtered['title'].str.contains(anime_query, case=False, na=False)]
-    if not search_results.empty:
-        st.write(f"Found {len(search_results)} result(s):")
-        st.dataframe(search_results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
-        selected = search_results.iloc[0]
-        st.markdown(f"**Title:** {selected['title']}")
-        st.markdown(f"**Score:** {selected['score']}")
-        st.markdown(f"**Members:** {selected['members']}")
-        st.markdown(f"**Episodes:** {selected['episodes']}")
-        st.markdown(f"**Year:** {selected['year']}")
-        st.markdown(f"**Genres:** {selected['genres']}")
-        st.markdown(f"**Studios:** {selected['studios']}")
-    else:
-        st.warning("No anime found matching your search.")
-
-st.subheader("Search Anime by Genre")
-genre_search = st.text_input("Enter genre (partial or full) to list anime:")
-if genre_search:
-    genre_results = filtered[filtered["genres"].str.contains(genre_search, case=False, na=False)]
-    genre_results = genre_results.sort_values(by="score", ascending=False)
-    if not genre_results.empty:
-        st.write(f"Found {len(genre_results)} anime in genre '{genre_search}':")
-        st.dataframe(genre_results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
-    else:
-        st.warning(f"No anime found for genre '{genre_search}'.")
-
-st.subheader("Search Anime by Studio")
-studio_search = st.text_input("Enter studio (partial or full) to list works:")
-if studio_search:
-    studio_results = filtered[filtered["studios"].str.contains(studio_search, case=False, na=False)]
-    studio_results = studio_results.sort_values(by="score", ascending=False)
-    if not studio_results.empty:
-        st.write(f"Found {len(studio_results)} anime produced by studio '{studio_search}':")
-        st.dataframe(studio_results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
-    else:
-        st.warning(f"No anime found for studio '{studio_search}'.")
+st.subheader("K-means Clustering: Score vs Members")
+try:
+    clustered = pd.read_csv("anime_2020_2025_clustered.csv")
+    clustered = clustered.dropna(subset=["score", "members", "prediction"])
+    clustered["score"] = clustered["score"].astype(float)
+    clustered["members"] = clustered["members"].astype(int)
+    clustered["prediction"] = clustered["prediction"].astype(int)
+    figc, axc = plt.subplots(figsize=(10, 6))
+    scatter = axc.scatter(
+        clustered["score"],
+        clustered["members"],
+        c=clustered["prediction"],
+        cmap="tab10",
+        alpha=0.7,
+        edgecolor="k"
+    )
+    legend1 = axc.legend(*scatter.legend_elements(), title="Cluster")
+    axc.add_artist(legend1)
+    axc.set_xlabel("Score")
+    axc.set_ylabel("Members")
+    axc.set_title("K-means Clusters (Score vs Members)")
+    st.pyplot(figc)
+except Exception as e:
+    st.warning(f"Could not load or plot clustering results: {e}")
