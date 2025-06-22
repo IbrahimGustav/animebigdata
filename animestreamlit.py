@@ -97,7 +97,7 @@ st.subheader("Search Anime by Genre")
 genre_search = st.text_input("Enter genre (partial or full) to list anime:")
 if genre_search:
     genre_results = filtered[filtered["genres"].str.contains(genre_search, case=False, na=False)]
-    genre_results = genre_results.sort_values(by="score", ascending=False)_results = genre_results.sort_values(by="score", ascending=False)
+    genre_results = genre_results.sort_values(by="score", ascending=False)
     if not genre_results.empty:
         st.write(f"Found {len(genre_results)} anime in genre '{genre_search}':")
         st.dataframe(genre_results[["title", "score", "members", "episodes", "year", "genres", "studios"]].reset_index(drop=True))
