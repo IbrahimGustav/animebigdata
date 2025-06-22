@@ -1,81 +1,74 @@
 import streamlit as st
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-@st.cache_data
-def load_data():
-    return pd.read_csv("anime_2020_2025_clustered.csv")
+st.set_page_config(page_title="Anime Trends Dashboard", layout="wide")
+st.title("Anime Trends (2020–2025)")
 
-df = load_data()
-df["genres_list"] = df["genres"].apply(lambda x: x.split(", ") if isinstance(x, str) else [])
-df["studio_list"] = df["studios"].apply(lambda x: x.split(", ") if isinstance(x, str) else [])
+data = pd.read_csv("anime_2020_2025.csv")
 
-st.title("Anime Trends Dashboard (2020–2025)")
+data = data.dropna(subset=["score", "members", "episodes", "aired_from"])
+data = data[(data["score"] > 0) & (data["members"] > 0) & (data["episodes"] > 0)]
+data["score"] = data["score"].astype(float)
+data["members"] = data["members"].astype(int)
+data["episodes"] = data["episodes"].astype(int)
+data["aired_from"] = pd.to_datetime(data["aired_from"], errors="coerce")
+data["year"] = data["aired_from"].dt.year
+data["month"] = data["aired_from"].dt.month
+data["genres_list"] = data["genres"].fillna("").apply(lambda x: x.split(", ") if x else [])
 
-tabs = st.tabs(["Genre Insights", "Studio Insights", "Anime Lookup"])
+years = sorted(data["year"].dropna().unique())
+genres = sorted(set(g for sublist in data["genres_list"] for g in sublist if g))
+selected_years = st.sidebar.multiselect("Select Year(s)", years, default=years)
+selected_genres = st.sidebar.multiselect("Select Genre(s)", genres, default=genres[:5] if genres else [])
+score_min, score_max = st.sidebar.slider("Score Range", 0, 10, (0, 10), 1)
 
-with tabs[0]:
-    st.header("Genre Insights")
-    
-    genre_stats = []
-    for _, row in df.iterrows():
-        for genre in row["genres_list"]:
-            genre_stats.append((genre, row["score"], row["members"]))
+filtered = data[data["year"].isin(selected_years)]
+if selected_genres:
+    filtered = filtered[filtered["genres_list"].apply(lambda gl: any(g in gl for g in selected_genres))]
+filtered = filtered[(filtered["score"] >= score_min) & (filtered["score"] <= score_max)]
 
-    genre_df = pd.DataFrame(genre_stats, columns=["genre", "score", "members"])
+st.subheader("Score vs Popularity (Members Count)")
+fig1, ax1 = plt.subplots(figsize=(10, 6))
+sns.scatterplot(data=filtered, x="score", y="members", alpha=0.6, ax=ax1)
+ax1.set_xticks(range(0, 11))
+ax1.set_xlabel("Score")
+ax1.set_ylabel("Members Count")
+st.pyplot(fig1)
 
-    avg_score = genre_df.groupby("genre")["score"].mean().sort_values(ascending=False).head(10)
-    total_members = genre_df.groupby("genre")["members"].sum().sort_values(ascending=False).head(10)
+st.subheader("Score Distribution")
+fig2, ax2 = plt.subplots(figsize=(10, 6))
+sns.histplot(filtered["score"], bins=20, kde=True, ax=ax2)
+ax2.set_xticks(range(0, 11))
+ax2.set_xlabel("Score")
+ax2.set_ylabel("Count")
+st.pyplot(fig2)
 
-    st.subheader("Top 10 Genres by Average Score")
-    fig, ax = plt.subplots(figsize=(8, 5))
-    sns.barplot(x=avg_score.values, y=avg_score.index, ax=ax, palette="crest")
-    ax.set_xlabel("Average Score")
-    st.pyplot(fig)
+st.subheader("Members Trend Over Years")
+members_trend = filtered.groupby("year")["members"].sum().reset_index()
+fig3, ax3 = plt.subplots(figsize=(10, 6))
+sns.lineplot(data=members_trend, x="year", y="members", marker="o", ax=ax3)
+ax3.set_xlabel("Year")
+ax3.set_ylabel("Total Members")
+st.pyplot(fig3)
 
-    st.subheader("👥 Top 10 Genres by Total Members")
-    fig, ax = plt.subplots(figsize=(8, 5))
-    sns.barplot(x=total_members.values, y=total_members.index, ax=ax, palette="rocket")
-    ax.set_xlabel("Total Members")
-    st.pyplot(fig)
+st.subheader("Top Genres per Year")
+genre_years = []
+for _, row in filtered.iterrows():
+    for g in row["genres_list"]:
+        genre_years.append((row["year"], g))
+genre_df = pd.DataFrame(genre_years, columns=["year", "genre"])
+top_genres = genre_df["genre"].value_counts().head(10).index
+filtered_genre = genre_df[genre_df["genre"].isin(top_genres)]
+fig4, ax4 = plt.subplots(figsize=(12, 6))
+sns.countplot(data=filtered_genre, x="year", hue="genre", ax=ax4)
+ax4.set_title("Top Genre Frequencies per Year (2020–2025)")
+ax4.set_xlabel("Year")
+ax4.set_ylabel("Count")
+ax4.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+st.pyplot(fig4)
 
-with tabs[1]:
-    st.header("Studio Insights")
-
-    # Most productive studios
-    all_studios = df.explode("studio_list")
-    studio_counts = all_studios["studio_list"].value_counts().head(10)
-
-    st.subheader("Top 10 Studios by Number of Anime Produced")
-    fig, ax = plt.subplots(figsize=(8, 5))
-    sns.barplot(x=studio_counts.values, y=studio_counts.index, ax=ax)
-    ax.set_xlabel("Number of Anime")
-    st.pyplot(fig)
-
-    # Highest rated studios
-    studio_scores = all_studios.groupby("studio_list")["score"].mean().sort_values(ascending=False).head(10)
-
-    st.subheader("Top 10 Studios by Average Score")
-    fig, ax = plt.subplots(figsize=(8, 5))
-    sns.barplot(x=studio_scores.values, y=studio_scores.index, ax=ax)
-    ax.set_xlabel("Average Score")
-    st.pyplot(fig)
-
-with tabs[2]:
-    st.header("Search Anime Details")
-
-    anime_name = st.text_input("Enter an anime title:")
-    if anime_name:
-        result = df[df["title"].str.contains(anime_name, case=False, na=False)]
-        if not result.empty:
-            for _, row in result.iterrows():
-                st.subheader(row["title"])
-                st.markdown(f"**Score**: {row['score']}  |  **Members**: {row['members']}")
-                st.markdown(f"**Genres**: {row['genres']}")
-                st.markdown(f"**Studio(s)**: {row['studios']}")
-                st.markdown(f"**Episodes**: {row['episodes']}  |  **Type**: {row['type']}")
-                st.markdown(f"**Aired**: {row['aired_from']} to {row['aired_to']}")
-                st.divider()
-        else:
-            st.warning("No anime found with that title.")
+st.subheader("Top 20 Highest Rated Anime")
+top_anime = filtered.sort_values(by="score", ascending=False).dropna(subset=["title", "score"]).head(20)
+st.dataframe(top_anime[["title", "score", "members", "year"]].reset_index(drop=True))
